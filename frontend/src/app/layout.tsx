@@ -2,6 +2,8 @@ import './globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { ScannerProvider } from '@/lib/scanner-context'
+import { LoggingProvider } from '@/lib/logging-context'
+import { Toaster } from 'sonner'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -18,9 +20,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ScannerProvider>
-          {children}
-        </ScannerProvider>
+        <LoggingProvider>
+          <ScannerProvider>
+            {children}
+            <Toaster />
+          </ScannerProvider>
+        </LoggingProvider>
       </body>
     </html>
   )

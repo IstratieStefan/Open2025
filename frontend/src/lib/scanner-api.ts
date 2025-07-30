@@ -125,8 +125,6 @@ class ScannerAPI {
 	}
 
 	getDeviceStatus(): DeviceStatus {
-		// window.electronAPI.send('device:getStatus');
-
 		return {
 			baseRotation: 0,
 			sensorRotation: 0,
@@ -136,6 +134,7 @@ class ScannerAPI {
 			scanning: false,
 			emergencyStop: false
 		}
+		window.electronAPI.send('device:getStatus');
 	}
 
 	emergencyStop(): void {

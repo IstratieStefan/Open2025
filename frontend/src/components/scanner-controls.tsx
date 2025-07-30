@@ -3,13 +3,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
+import { useLogging } from '@/lib/logging-context';
 import {
 	Activity,
+	ArrowUpDown,
 	Clock,
 	Layers,
 	Pause,
 	Play,
 	RotateCcw,
+	RotateCw,
 	Square
 } from 'lucide-react';
 
@@ -31,6 +35,12 @@ interface ScannerControlsProps {
 	estimatedTime?: string;
 	currentLayer?: number;
 	totalLayers?: number;
+	// Sensor control props
+	baseRotation?: number;
+	sensorRotation?: number;
+	maxSensorRange?: number;
+	onRotateBase?: (angle: number) => void;
+	onMoveSensor?: (position: number) => void;
 }
 
 const statusConfig = {
@@ -55,32 +65,75 @@ export function ScannerControls({
 	progress = 0,
 	estimatedTime = '--:--',
 	currentLayer = 0,
-	totalLayers = 100
+	totalLayers = 100,
+	baseRotation = 0,
+	sensorRotation = 50,
+	maxSensorRange = 100,
+	onRotateBase = () => {},
+	onMoveSensor = () => {}
 }: ScannerControlsProps) {
 	const [isScanning, setIsScanning] = useState(false);
 	const [isPaused, setIsPaused] = useState(false);
+	const [baseAngleInput, setBaseAngleInput] = useState('');
+	const [sensorAngleInput, setSensorAngleInput] = useState('');
+	const { addStatus, addInfo, addError } = useLogging();
 
 	const handleStart = () => {
 		setIsScanning(true);
 		setIsPaused(false);
+		addStatus('Scan started');
+		addInfo(`Starting scan with ${totalLayers} layers`);
 		onStart();
 	};
 
 	const handlePause = () => {
 		setIsPaused(!isPaused);
+		addStatus(isPaused ? 'Scan resumed' : 'Scan paused');
 		onPause();
 	};
 
 	const handleStop = () => {
 		setIsScanning(false);
 		setIsPaused(false);
+		addStatus('Scan stopped');
+		addInfo('Scan operation terminated by user');
 		onStop();
 	};
 
 	const handleReset = () => {
 		setIsScanning(false);
 		setIsPaused(false);
+		addInfo('Scanner reset to initial state');
 		onReset();
+	};
+
+	// Helper functions for sensor controls
+	const formatRotation = (angle: number) => `${angle.toFixed(1)}°`;
+
+	const handleBaseRotation = (angle: number) => {
+		addInfo(`Base rotation set to ${formatRotation(angle)}`);
+		onRotateBase(angle);
+	};
+
+	const handleSensorMove = (position: number) => {
+		addInfo(`Sensor position set to ${formatRotation(position)}`);
+		onMoveSensor(position);
+	};
+
+	const handleSetBaseAngle = () => {
+		const angle = parseFloat(baseAngleInput);
+		if (!isNaN(angle)) {
+			handleBaseRotation(angle);
+			setBaseAngleInput('');
+		}
+	};
+
+	const handleSetSensorAngle = () => {
+		const angle = parseFloat(sensorAngleInput);
+		if (!isNaN(angle)) {
+			handleSensorMove(angle);
+			setSensorAngleInput('');
+		}
 	};
 
 	const config = statusConfig[status];
@@ -185,6 +238,173 @@ export function ScannerControls({
 						</p>
 					</div>
 				)}
+
+				{/* Sensor Controls Section */}
+				<div className='space-y-4 border-t pt-4'>
+					<h4 className='text-sm font-medium'>Sensor Controls</h4>
+					
+					{/* Base Rotation */}
+					<div className='space-y-3'>
+						<div className='flex items-center justify-between'>
+							<div className='flex items-center gap-2'>
+								<RotateCw className='text-muted-foreground h-4 w-4' />
+								<span className='font-medium'>Base Rotation</span>
+							</div>
+							<span className='font-mono text-sm'>
+								{formatRotation(baseRotation)}
+							</span>
+						</div>
+						<div className='flex gap-2'>
+							<Button
+								variant='outline'
+								size='sm'
+								onClick={() => handleBaseRotation(baseRotation - 5)}
+							>
+								-5°
+							</Button>
+							<Button
+								variant='outline'
+								size='sm'
+								onClick={() => handleBaseRotation(baseRotation + 5)}
+							>
+								+5°
+							</Button>
+							<Input
+								type='number'
+								value={baseAngleInput}
+								onChange={(e) => setBaseAngleInput(e.target.value)}
+								className='w-20'
+								placeholder='Angle'
+							/>
+							<Button variant='outline' size='sm' onClick={handleSetBaseAngle}>
+								Set
+							</Button>
+						</div>
+
+						{/* Circular Progress Indicator */}
+						<div className='flex justify-center'>
+							<div className='relative h-20 w-20'>
+								<svg
+									className='h-full w-full -rotate-90 transform'
+									viewBox='0 0 100 100'
+								>
+									{/* Background circle */}
+									<circle
+										cx='50'
+										cy='50'
+										r='40'
+										stroke='currentColor'
+										strokeWidth='6'
+										fill='none'
+										className='text-muted'
+									/>
+									{/* Progress circle */}
+									<circle
+										cx='50'
+										cy='50'
+										r='40'
+										stroke='currentColor'
+										strokeWidth='6'
+										fill='none'
+										strokeDasharray={`${(baseRotation / 360) * 251} 251`}
+										className='text-primary'
+									/>
+									{/* Center dot */}
+									<circle
+										cx='50'
+										cy='50'
+										r='2'
+										fill='currentColor'
+										className='text-primary'
+									/>
+									{/* Position indicator */}
+									<circle
+										cx={
+											50 +
+											35 *
+												Math.cos(
+													((baseRotation - 90) * Math.PI) / 180
+												)
+										}
+										cy={
+											50 +
+											35 *
+												Math.sin(
+													((baseRotation - 90) * Math.PI) / 180
+												)
+										}
+										r='3'
+										fill='currentColor'
+										className='text-primary'
+									/>
+								</svg>
+								<div className='absolute inset-0 flex items-center justify-center'>
+									<span className='font-mono text-xs'>
+										{formatRotation(baseRotation)}
+									</span>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					{/* Sensor Rotation */}
+					<div className='space-y-3'>
+						<div className='flex items-center justify-between'>
+							<div className='flex items-center gap-2'>
+								<ArrowUpDown className='text-muted-foreground h-4 w-4' />
+								<span className='font-medium'>Sensor Rotation</span>
+							</div>
+							<span className='font-mono text-sm'>
+								{formatRotation(sensorRotation)}
+							</span>
+						</div>
+
+						<div className='space-y-2'>
+							<Progress
+								value={(sensorRotation / maxSensorRange) * 100}
+								className='w-full'
+							/>
+							<div className='text-muted-foreground flex justify-between text-xs'>
+								<span>0°</span>
+								<span>{maxSensorRange}°</span>
+							</div>
+							<div className='flex gap-2'>
+								<Button
+									variant='outline'
+									size='sm'
+									onClick={() =>
+										handleSensorMove(sensorRotation - 5)
+									}
+								>
+									-5°
+								</Button>
+								<Button
+									variant='outline'
+									size='sm'
+									onClick={() =>
+										handleSensorMove(sensorRotation + 5)
+									}
+								>
+									+5°
+								</Button>
+								<Input
+									type='number'
+									value={sensorAngleInput}
+									onChange={(e) => setSensorAngleInput(e.target.value)}
+									className='w-20'
+									placeholder='Angle'
+								/>
+								<Button
+									variant='outline'
+									size='sm'
+									onClick={handleSetSensorAngle}
+								>
+									Set
+								</Button>
+							</div>
+						</div>
+					</div>
+				</div>
 			</CardContent>
 		</Card>
 	);

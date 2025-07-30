@@ -93,6 +93,10 @@ export default function Dashboard() {
 										estimatedTime={estimatedTime}
 										currentLayer={currentLayer}
 										totalLayers={totalLayers}
+										baseRotation={deviceStatus?.baseRotation || 0}
+										sensorRotation={deviceStatus?.sensorRotation || 50}
+										onRotateBase={handleRotatePlate}
+										onMoveSensor={handleMoveSensor}
 									/>
 								</TabsContent>
 
@@ -112,8 +116,6 @@ export default function Dashboard() {
 									<DeviceMonitor
 										deviceStatus={deviceStatus || undefined}
 										onCalibrate={handleCalibrate}
-										onMoveSensor={handleMoveSensor}
-										onRotatePlate={handleRotatePlate}
 										onEmergencyStop={handleEmergencyStop}
 									/>
 								</TabsContent>
