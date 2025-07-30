@@ -24,7 +24,7 @@ export type ExportFormat = 'stl' | 'obj' | 'ply' | 'glb' | 'gltf';
 
 interface ExportControlsProps {
 	modelData?: any;
-	onExport?: (options: any, location: 'local' | 'cloud') => Promise<boolean>;
+	onExport?: (options: any, location: 'local' | 'cloud') => void;
 	isExporting?: boolean;
 	exportProgress?: number;
 }
@@ -69,7 +69,7 @@ const formatConfigs = {
 
 export function ExportControls({
 	modelData,
-	onExport = async () => true,
+	onExport = () => {},
 	isExporting = false,
 	exportProgress = 0
 }: ExportControlsProps) {
@@ -87,11 +87,9 @@ export function ExportControls({
 
 	const handleExport = async (location: 'local' | 'cloud') => {
 		try {
-			const success = await onExport(exportOptions, location);
-			if (success) {
-				setLastExport({ format: exportOptions.format, timestamp: new Date() });
+			await onExport(exportOptions, location);
 
-				// For demo purposes, simulate file download
+			setLastExport({ format: exportOptions.format, timestamp: new Date() });
 				if (location === 'local') {
 					const config = formatConfigs[exportOptions.format];
 					const blob = new Blob(['# Mock 3D model data'], {
@@ -99,7 +97,6 @@ export function ExportControls({
 					});
 					saveAs(blob, `${exportOptions.fileName}${config.extension}`);
 				}
-			}
 		} catch (error) {
 			console.error('Export failed:', error);
 		}

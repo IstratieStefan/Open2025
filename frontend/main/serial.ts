@@ -1,6 +1,6 @@
 import { ReadlineParser, SerialPort } from 'serialport';
 
-export interface boardData {
+export interface BoardData {
 	port: string;
 	baudRate: number;
 }
@@ -11,7 +11,7 @@ export class Serial {
 	private _connected: boolean = false;
 
 	constructor(
-		private _data: boardData,
+		private _data: BoardData,
 		private _dataFunction: (data: string) => void
 	) {
 		this._connect();

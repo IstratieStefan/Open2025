@@ -1,12 +1,11 @@
-'use client';
-
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { type DeviceStatus, scannerAPI } from '@/lib/scanner-api';
+import { type DeviceStatus } from '@/lib/scanner-api';
 import {
+	AlertOctagon,
 	AlertTriangle,
 	ArrowUpDown,
 	Gauge,
@@ -21,46 +20,38 @@ interface DeviceMonitorProps {
 	deviceStatus?: DeviceStatus;
 	maxSensorRange?: number;
 	onCalibrate?: () => void;
+	onMoveSensor?: (position: number) => void;
+	onRotatePlate?: (angle: number) => void;
+	onEmergencyStop?: () => void;
 }
 
 export function DeviceMonitor({
 	deviceStatus,
 	maxSensorRange = 100,
-	onCalibrate = () => {}
+	onCalibrate = () => {},
+	onMoveSensor = () => {},
+	onRotatePlate = () => {},
+	onEmergencyStop = () => {}
 }: DeviceMonitorProps) {
-	const [status, setStatus] = useState<DeviceStatus | null>(
-		deviceStatus || null
-	);
 	const [isCalibrating, setIsCalibrating] = useState(false);
+	const [baseAngleInput, setBaseAngleInput] = useState('');
+	const [sensorAngleInput, setSensorAngleInput] = useState('');
 
-	// Subscribe to real-time device status updates
-	useEffect(() => {
-		const unsubscribe = scannerAPI.onDeviceStatusUpdate((deviceStatus) => {
-			setStatus(deviceStatus);
-		});
-
-		// Get initial device status
-		scannerAPI.getDeviceStatus().then((initialStatus) => {
-			if (initialStatus) {
-				setStatus(initialStatus);
-			}
-		});
-
-		return unsubscribe;
-	}, []);
-
-	// Update status when prop changes
-	useEffect(() => {
-		if (deviceStatus) {
-			setStatus(deviceStatus);
-		}
-	}, [deviceStatus]);
+	// Use mock data if no real status is available
+	const currentStatus = deviceStatus || {
+		baseRotation: 0,
+		sensorRotation: 50,
+		distance: 0,
+		isConnected: false,
+		lastUpdate: new Date(),
+		scanning: false,
+		emergencyStop: false
+	};
 
 	const handleCalibrate = async () => {
 		setIsCalibrating(true);
 		try {
-			await scannerAPI.calibrateDevice();
-			onCalibrate();
+			await onCalibrate();
 		} catch (error) {
 			console.error('Calibration failed:', error);
 		} finally {
@@ -68,14 +59,28 @@ export function DeviceMonitor({
 		}
 	};
 
-	// Use mock data if no real status is available
-	const currentStatus = status || {
-		sensorY: 50,
-		plateRotation: 180,
-		isConnected: false,
-		lastUpdate: new Date(),
-		batteryLevel: 85,
-		temperature: 25
+	const handleBaseRotation = (angle: number) => {
+		onRotatePlate(angle);
+	};
+
+	const handleSensorMove = (position: number) => {
+		onMoveSensor(position);
+	};
+
+	const handleSetBaseAngle = () => {
+		const angle = parseFloat(baseAngleInput);
+		if (!isNaN(angle)) {
+			handleBaseRotation(angle);
+			setBaseAngleInput('');
+		}
+	};
+
+	const handleSetSensorAngle = () => {
+		const angle = parseFloat(sensorAngleInput);
+		if (!isNaN(angle)) {
+			handleSensorMove(angle);
+			setSensorAngleInput('');
+		}
 	};
 
 	const getConnectionBadge = () => {
@@ -97,6 +102,7 @@ export function DeviceMonitor({
 	};
 
 	const formatRotation = (angle: number) => {
+		console.log(currentStatus);
 		return `${angle.toFixed(1)}°`;
 	};
 
@@ -115,6 +121,8 @@ export function DeviceMonitor({
 		const hours = Math.floor(minutes / 60);
 		return `${hours}h ago`;
 	};
+	
+	
 
 	return (
 		<Card>
@@ -140,6 +148,16 @@ export function DeviceMonitor({
 					</div>
 				)}
 
+				{/* Emergency Stop Button */}
+				<Button
+					onClick={onEmergencyStop}
+					variant='destructive'
+					className='w-full'
+				>
+					<AlertOctagon className='mr-2 h-4 w-4' />
+					Emergency Stop
+				</Button>
+
 				{/* Calibration Button */}
 				<Button
 					onClick={handleCalibrate}
@@ -151,40 +169,42 @@ export function DeviceMonitor({
 					{isCalibrating ? 'Calibrating...' : 'Calibrate Device'}
 				</Button>
 
-				{/* Distance Sensor Position */}
-				<div className='space-y-3'>
-					<div className='flex items-center justify-between'>
-						<div className='flex items-center gap-2'>
-							<ArrowUpDown className='text-muted-foreground h-4 w-4' />
-							<span className='font-medium'>Distance Sensor Y Position</span>
-						</div>
-						<span className='font-mono text-sm'>
-							{formatPosition(currentStatus.sensorY)}
-						</span>
-					</div>
-
-					<div className='space-y-2'>
-						<Progress
-							value={(currentStatus.sensorY / maxSensorRange) * 100}
-							className='w-full'
-						/>
-						<div className='text-muted-foreground flex justify-between text-xs'>
-							<span>0 mm</span>
-							<span>{maxSensorRange} mm</span>
-						</div>
-					</div>
-				</div>
-
-				{/* Plate Rotation */}
+				{/* Base Rotation */}
 				<div className='space-y-3'>
 					<div className='flex items-center justify-between'>
 						<div className='flex items-center gap-2'>
 							<RotateCw className='text-muted-foreground h-4 w-4' />
-							<span className='font-medium'>Plate Rotation</span>
+							<span className='font-medium'>Base Rotation</span>
 						</div>
 						<span className='font-mono text-sm'>
-							{formatRotation(currentStatus.plateRotation)}
+							{formatRotation(currentStatus.baseRotation)}
 						</span>
+					</div>
+					<div className='flex gap-2'>
+						<Button
+							variant='outline'
+							size='sm'
+							onClick={() => handleBaseRotation(currentStatus.baseRotation - 5)}
+						>
+							-5°
+						</Button>
+						<Button
+							variant='outline'
+							size='sm'
+							onClick={() => handleBaseRotation(currentStatus.baseRotation + 5)}
+						>
+							+5°
+						</Button>
+						<input
+							type='number'
+							value={baseAngleInput}
+							onChange={(e) => setBaseAngleInput(e.target.value)}
+							className='w-20 rounded border px-2'
+							placeholder='Angle'
+						/>
+						<Button variant='outline' size='sm' onClick={handleSetBaseAngle}>
+							Set
+						</Button>
 					</div>
 
 					{/* Circular Progress Indicator */}
@@ -212,7 +232,7 @@ export function DeviceMonitor({
 									stroke='currentColor'
 									strokeWidth='4'
 									fill='none'
-									strokeDasharray={`${(currentStatus.plateRotation / 360) * 283} 283`}
+									strokeDasharray={`${(currentStatus.baseRotation / 360) * 283} 283`}
 									className='text-primary'
 								/>
 								{/* Center dot */}
@@ -229,14 +249,14 @@ export function DeviceMonitor({
 										50 +
 										40 *
 											Math.cos(
-												((currentStatus.plateRotation - 90) * Math.PI) / 180
+												((currentStatus.baseRotation - 90) * Math.PI) / 180
 											)
 									}
 									cy={
 										50 +
 										40 *
 											Math.sin(
-												((currentStatus.plateRotation - 90) * Math.PI) / 180
+												((currentStatus.baseRotation - 90) * Math.PI) / 180
 											)
 									}
 									r='3'
@@ -246,10 +266,81 @@ export function DeviceMonitor({
 							</svg>
 							<div className='absolute inset-0 flex items-center justify-center'>
 								<span className='font-mono text-xs'>
-									{formatRotation(currentStatus.plateRotation)}
+									{formatRotation(currentStatus.baseRotation)}
 								</span>
 							</div>
 						</div>
+					</div>
+				</div>
+
+				{/* Sensor Rotation */}
+				<div className='space-y-3'>
+					<div className='flex items-center justify-between'>
+						<div className='flex items-center gap-2'>
+							<ArrowUpDown className='text-muted-foreground h-4 w-4' />
+							<span className='font-medium'>Sensor Rotation</span>
+						</div>
+						<span className='font-mono text-sm'>
+							{formatRotation(currentStatus.sensorRotation)}
+						</span>
+					</div>
+
+					<div className='space-y-2'>
+						<Progress
+							value={(currentStatus.sensorRotation / maxSensorRange) * 100}
+							className='w-full'
+						/>
+						<div className='text-muted-foreground flex justify-between text-xs'>
+							<span>0°</span>
+							<span>{maxSensorRange}°</span>
+						</div>
+						<div className='flex gap-2'>
+							<Button
+								variant='outline'
+								size='sm'
+								onClick={() =>
+									handleSensorMove(currentStatus.sensorRotation - 5)
+								}
+							>
+								-5°
+							</Button>
+							<Button
+								variant='outline'
+								size='sm'
+								onClick={() =>
+									handleSensorMove(currentStatus.sensorRotation + 5)
+								}
+							>
+								+5°
+							</Button>
+							<input
+								type='number'
+								value={sensorAngleInput}
+								onChange={(e) => setSensorAngleInput(e.target.value)}
+								className='w-20 rounded border px-2'
+								placeholder='Angle'
+							/>
+							<Button
+								variant='outline'
+								size='sm'
+								onClick={handleSetSensorAngle}
+							>
+								Set
+							</Button>
+						</div>
+					</div>
+				</div>
+
+				{/* Distance Reading */}
+				<div className='space-y-3'>
+					<div className='flex items-center justify-between'>
+						<div className='flex items-center gap-2'>
+							<MapPin className='text-muted-foreground h-4 w-4' />
+							<span className='font-medium'>Distance</span>
+						</div>
+						<span className='font-mono text-sm'>
+							{currentStatus.distance} mm
+						</span>
 					</div>
 				</div>
 
@@ -264,27 +355,15 @@ export function DeviceMonitor({
 						<div className='text-muted-foreground text-sm'>Status</div>
 						<div className='flex items-center gap-1'>
 							<MapPin className='h-3 w-3' />
-							<span className='text-sm'>Active</span>
+							<span className='text-sm'>
+								{currentStatus.scanning
+									? 'Scanning'
+									: currentStatus.emergencyStop
+										? 'Emergency Stop'
+										: 'Active'}
+							</span>
 						</div>
 					</div>
-
-					{currentStatus.batteryLevel && (
-						<div className='space-y-2'>
-							<div className='text-muted-foreground text-sm'>Battery</div>
-							<div className='font-mono text-sm'>
-								{currentStatus.batteryLevel.toFixed(0)}%
-							</div>
-						</div>
-					)}
-
-					{currentStatus.temperature && (
-						<div className='space-y-2'>
-							<div className='text-muted-foreground text-sm'>Temperature</div>
-							<div className='font-mono text-sm'>
-								{currentStatus.temperature.toFixed(1)}°C
-							</div>
-						</div>
-					)}
 				</div>
 			</CardContent>
 		</Card>

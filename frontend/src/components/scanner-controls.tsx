@@ -1,5 +1,3 @@
-'use client';
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,6 +17,7 @@ export type ScannerStatus =
 	| 'idle'
 	| 'scanning'
 	| 'paused'
+	| 'emergency_stop'
 	| 'error'
 	| 'completed';
 
@@ -39,7 +38,12 @@ const statusConfig = {
 	scanning: { label: 'Scanning', color: 'default' as const, icon: Activity },
 	paused: { label: 'Paused', color: 'secondary' as const, icon: Pause },
 	error: { label: 'Error', color: 'destructive' as const, icon: Activity },
-	completed: { label: 'Completed', color: 'default' as const, icon: Activity }
+	completed: { label: 'Completed', color: 'default' as const, icon: Activity },
+	emergency_stop: {
+		label: 'Emergency Stop',
+		color: 'destructive' as const,
+		icon: Activity
+	}
 };
 
 export function ScannerControls({
