@@ -19,11 +19,11 @@ import {
 	Upload
 } from 'lucide-react';
 import { saveAs } from 'file-saver';
+import { useModel3D } from '@/lib/model3d-context';
 
 export type ExportFormat = 'stl' | 'obj' | 'ply' | 'glb' | 'gltf';
 
 interface ExportControlsProps {
-	modelData?: any;
 	onExport?: (options: any, location: 'local' | 'cloud') => void;
 	isExporting?: boolean;
 	exportProgress?: number;
@@ -67,12 +67,119 @@ const formatConfigs = {
 	}
 };
 
+// Helper function to convert model data to different formats
+function generateSTL(modelData: any): string {
+	// Simple STL generation for point cloud data
+	let stl = 'solid model\n';
+	
+	// For each slice, create simple triangles
+	modelData.forEach((slice: any, sliceIndex: number) => {
+		if (sliceIndex < modelData.length - 1) {
+			const nextSlice = modelData[sliceIndex + 1];
+			// Create triangles between slices
+			slice.points.forEach((point: any, pointIndex: number) => {
+				const nextPoint = slice.points[(pointIndex + 1) % slice.points.length];
+				if (nextSlice.points[pointIndex]) {
+					const upperPoint = nextSlice.points[pointIndex];
+					
+					// Convert cylindrical to cartesian
+					const p1 = cylindricalToCartesian(point.radius, slice.height, point.angle);
+					const p2 = cylindricalToCartesian(nextPoint.radius, slice.height, nextPoint.angle);
+					const p3 = cylindricalToCartesian(upperPoint.radius, nextSlice.height, upperPoint.angle);
+					
+					stl += `facet normal 0 0 0\n`;
+					stl += `  outer loop\n`;
+					stl += `    vertex ${p1[0]} ${p1[1]} ${p1[2]}\n`;
+					stl += `    vertex ${p2[0]} ${p2[1]} ${p2[2]}\n`;
+					stl += `    vertex ${p3[0]} ${p3[1]} ${p3[2]}\n`;
+					stl += `  endloop\n`;
+					stl += `endfacet\n`;
+				}
+			});
+		}
+	});
+	
+	stl += 'endsolid model\n';
+	return stl;
+}
+
+function cylindricalToCartesian(radius: number, height: number, angle: number): [number, number, number] {
+	const theta = (angle * Math.PI) / 180;
+	const x = radius * Math.cos(theta);
+	const y = height;
+	const z = radius * Math.sin(theta);
+	return [x, y, z];
+}
+
+function generateOBJ(modelData: any): string {
+	let obj = '# 3D Scanner Export\n';
+	let vertexIndex = 1;
+	
+	// Add vertices
+	modelData.forEach((slice: any) => {
+		slice.points.forEach((point: any) => {
+			const [x, y, z] = cylindricalToCartesian(point.radius, slice.height, point.angle);
+			obj += `v ${x} ${y} ${z}\n`;
+		});
+	});
+	
+	// Add faces (simplified triangulation)
+	let currentVertex = 1;
+	modelData.forEach((slice: any, sliceIndex: number) => {
+		if (sliceIndex < modelData.length - 1) {
+			const nextSlice = modelData[sliceIndex + 1];
+			for (let i = 0; i < Math.min(slice.points.length, nextSlice.points.length); i++) {
+				const next = (i + 1) % Math.min(slice.points.length, nextSlice.points.length);
+				const v1 = currentVertex + i;
+				const v2 = currentVertex + next;
+				const v3 = currentVertex + slice.points.length + i;
+				const v4 = currentVertex + slice.points.length + next;
+				
+				// Two triangles to form a quad
+				obj += `f ${v1} ${v3} ${v2}\n`;
+				obj += `f ${v2} ${v3} ${v4}\n`;
+			}
+		}
+		currentVertex += slice.points.length;
+	});
+	
+	return obj;
+}
+
+function generatePLY(modelData: any): string {
+	let vertexCount = 0;
+	modelData.forEach((slice: any) => {
+		vertexCount += slice.points.length;
+	});
+	
+	let ply = 'ply\n';
+	ply += 'format ascii 1.0\n';
+	ply += `element vertex ${vertexCount}\n`;
+	ply += 'property float x\n';
+	ply += 'property float y\n';
+	ply += 'property float z\n';
+	ply += 'end_header\n';
+	
+	modelData.forEach((slice: any) => {
+		slice.points.forEach((point: any) => {
+			const [x, y, z] = cylindricalToCartesian(point.radius, slice.height, point.angle);
+			ply += `${x} ${y} ${z}\n`;
+		});
+	});
+	
+	return ply;
+}
+
+function generateJSON(modelData: any): string {
+	return JSON.stringify(modelData, null, 2);
+}
+
 export function ExportControls({
-	modelData,
 	onExport = () => {},
 	isExporting = false,
 	exportProgress = 0
 }: ExportControlsProps) {
+	const { modelData, hasModelData, exportModelData } = useModel3D();
 	const [exportOptions, setExportOptions] = useState({
 		format: 'stl' as ExportFormat,
 		fileName: 'scan_model',
@@ -90,13 +197,40 @@ export function ExportControls({
 			await onExport(exportOptions, location);
 
 			setLastExport({ format: exportOptions.format, timestamp: new Date() });
-				if (location === 'local') {
-					const config = formatConfigs[exportOptions.format];
-					const blob = new Blob(['# Mock 3D model data'], {
-						type: 'text/plain'
-					});
-					saveAs(blob, `${exportOptions.fileName}${config.extension}`);
+			
+			if (location === 'local' && hasModelData) {
+				const config = formatConfigs[exportOptions.format];
+				const currentModelData = exportModelData();
+				let content = '';
+				let mimeType = 'text/plain';
+				
+				switch (exportOptions.format) {
+					case 'stl':
+						content = generateSTL(currentModelData);
+						mimeType = 'application/sla';
+						break;
+					case 'obj':
+						content = generateOBJ(currentModelData);
+						mimeType = 'text/plain';
+						break;
+					case 'ply':
+						content = generatePLY(currentModelData);
+						mimeType = 'text/plain';
+						break;
+					case 'glb':
+					case 'gltf':
+						// For now, export as JSON until proper glTF export is implemented
+						content = generateJSON(currentModelData);
+						mimeType = 'application/json';
+						break;
+					default:
+						content = generateJSON(currentModelData);
+						mimeType = 'application/json';
 				}
+				
+				const blob = new Blob([content], { type: mimeType });
+				saveAs(blob, `${exportOptions.fileName}${config.extension}`);
+			}
 		} catch (error) {
 			console.error('Export failed:', error);
 		}
@@ -107,7 +241,6 @@ export function ExportControls({
 	};
 
 	const currentFormat = formatConfigs[exportOptions.format];
-	const hasModelData = Boolean(modelData);
 
 	return (
 		<Card>

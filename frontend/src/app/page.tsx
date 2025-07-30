@@ -2,11 +2,11 @@
 
 import { Model3DViewer } from '@/components/3d-viewer';
 import { ScannerControls } from '@/components/scanner-controls';
-import { ScanVolumeControls } from '@/components/scan-volume-controls';
 import { DeviceMonitor } from '@/components/device-monitor';
 import { ExportControls } from '@/components/export-controls';
+import { ModelEditor } from '@/components/model-editor';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Download, Monitor, Scan, Settings } from 'lucide-react';
+import { Download, Monitor, Scan, Layers } from 'lucide-react';
 import { useScanner } from '@/lib/scanner-context';
 
 export default function Dashboard() {
@@ -16,7 +16,6 @@ export default function Dashboard() {
 		estimatedTime,
 		currentLayer,
 		totalLayers,
-		scanVolume,
 		deviceStatus,
 		isExporting,
 		exportProgress,
@@ -24,8 +23,6 @@ export default function Dashboard() {
 		handleScanPause,
 		handleScanStop,
 		handleScanReset,
-		handleVolumeChange,
-		handleVolumeReset,
 		handleEmergencyStop,
 		handleCalibrate,
 		handleMoveSensor,
@@ -50,7 +47,7 @@ export default function Dashboard() {
 				<div className='grid h-[calc(100vh-120px)] grid-cols-1 gap-6 xl:grid-cols-3'>
 					{/* Left Panel - 3D Viewer */}
 					<div className='xl:col-span-2'>
-						<Model3DViewer modelData={null} scanVolume={scanVolume} />
+						<Model3DViewer />
 					</div>
 
 					{/* Right Panel - Controls */}
@@ -64,21 +61,21 @@ export default function Dashboard() {
 									<Scan className='h-4 w-4' />
 									<span className='hidden sm:inline'>Scan</span>
 								</TabsTrigger>
-								<TabsTrigger value='volume' className='flex items-center gap-1'>
-									<Settings className='h-4 w-4' />
-									<span className='hidden sm:inline'>Volume</span>
-								</TabsTrigger>
-								<TabsTrigger
-									value='monitor'
-									className='flex items-center gap-1'
-								>
-									<Monitor className='h-4 w-4' />
-									<span className='hidden sm:inline'>Monitor</span>
-								</TabsTrigger>
-								<TabsTrigger value='export' className='flex items-center gap-1'>
-									<Download className='h-4 w-4' />
-									<span className='hidden sm:inline'>Export</span>
-								</TabsTrigger>
+															<TabsTrigger value='model' className='flex items-center gap-1'>
+								<Layers className='h-4 w-4' />
+								<span className='hidden sm:inline'>Model</span>
+							</TabsTrigger>
+							<TabsTrigger
+								value='monitor'
+								className='flex items-center gap-1'
+							>
+								<Monitor className='h-4 w-4' />
+								<span className='hidden sm:inline'>Monitor</span>
+							</TabsTrigger>
+							<TabsTrigger value='export' className='flex items-center gap-1'>
+								<Download className='h-4 w-4' />
+								<span className='hidden sm:inline'>Export</span>
+							</TabsTrigger>
 							</TabsList>
 
 							<div className='mt-4 flex-1 overflow-auto'>
@@ -98,21 +95,13 @@ export default function Dashboard() {
 										onRotateBase={handleRotatePlate}
 										onMoveSensor={handleMoveSensor}
 									/>
-								</TabsContent>
+															</TabsContent>
 
-								<TabsContent value='volume' className='mt-0 h-full'>
-									<ScanVolumeControls
-										width={scanVolume.width}
-										height={scanVolume.height}
-										depth={scanVolume.depth}
-										onVolumeChange={handleVolumeChange}
-										onReset={handleVolumeReset}
-										minSize={1}
-										maxSize={50}
-									/>
-								</TabsContent>
+							<TabsContent value='model' className='mt-0 h-full'>
+								<ModelEditor />
+							</TabsContent>
 
-								<TabsContent value='monitor' className='mt-0 h-full'>
+							<TabsContent value='monitor' className='mt-0 h-full'>
 									<DeviceMonitor
 										deviceStatus={deviceStatus || undefined}
 										onCalibrate={handleCalibrate}
@@ -122,7 +111,6 @@ export default function Dashboard() {
 
 								<TabsContent value='export' className='mt-0 h-full'>
 									<ExportControls
-										modelData={null}
 										onExport={handleExport}
 										isExporting={isExporting}
 										exportProgress={exportProgress}
