@@ -2,12 +2,14 @@
   "name": "frontend",
   "version": "0.1.0",
   "private": true,
-  "main": "main/main.js",
+  "main": "main/main.ts",
   "scripts": {
     "dev": "concurrently -n \"NEXT,ELECTRON\" -c \"yellow,blue\" --kill-others \"next dev\" \"electron .\"",
     "build": "next build && electron-builder",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "build:electron": "tsc -p tsconfig.electron.json",
+    "start:electron": "bun run build:electron && electron ./main/dist/main.js"
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.7",
@@ -28,6 +30,7 @@
     "next": "15.4.5",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "serialport": "^13.0.0",
     "tailwind-merge": "^3.3.1",
     "three": "^0.178.0"
   },

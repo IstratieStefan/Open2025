@@ -5,13 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="73afdcdc-69f1-4447-961a-7bb8e45478f6" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/main/main.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/main/preload.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/bun.lock" beforeDir="false" afterPath="$PROJECT_DIR$/bun.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/next.config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/next.config.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/main.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/preload.js" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/globals.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/globals.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/app/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/3d-viewer.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/3d-viewer.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/device-monitor.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/device-monitor.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/export-controls.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/export-controls.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -90,7 +92,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1753861169945</updated>
-      <workItem from="1753861171319" duration="1982000" />
+      <workItem from="1753861171319" duration="4249000" />
     </task>
     <servers />
   </component>
