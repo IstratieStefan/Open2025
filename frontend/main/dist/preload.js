@@ -7,5 +7,8 @@ electron_1.contextBridge.exposeInMainWorld('electronAPI', {
     },
     send: (channel, args) => {
         electron_1.ipcRenderer.send(channel, args);
+    },
+    invoke: (channel, args) => {
+        return electron_1.ipcRenderer.invoke(channel, args);
     }
 });

@@ -1,14 +1,19 @@
 declare global {
 	interface Window {
 		electronAPI: {
-			on: (channel: string, callback: (...args: any[]) => void) => void;
-			send: (channel: string, args?: any) => void;
+			invoke: <T = any>(channel: string, args?: any) => Promise<T>;
 		};
 	}
 }
 
 export interface ScannerStatus {
-	status: 'idle' | 'scanning' | 'paused' | 'error' | 'completed' | 'emergency_stop';
+	status:
+		| 'idle'
+		| 'scanning'
+		| 'paused'
+		| 'error'
+		| 'completed'
+		| 'emergency_stop';
 	progress: number;
 	currentLayer: number;
 	totalLayers: number;
@@ -53,93 +58,85 @@ class ScannerAPI {
 		this.setupEventListeners();
 	}
 
-	private setupEventListeners() {
-		if (typeof window !== 'undefined' && window.electronAPI) {
-			// Scanner status updates
-			window.electronAPI.on('scanner:status', (status: ScannerStatus) => {
-				this.statusCallbacks.forEach(callback => callback(status));
-			});
-
-			// Device status updates
-			window.electronAPI.on('device:status', (status: DeviceStatus) => {
-				this.deviceStatusCallbacks.forEach(callback => callback(status));
-			});
-
-			// Error notifications
-			window.electronAPI.on('scanner:error', (error: string) => {
-				this.errorCallbacks.forEach(callback => callback(error));
-			});
-		}
-	}
+	private setupEventListeners() {}
 
 	// Event subscription methods
 	onStatusUpdate(callback: StatusCallback) {
 		this.statusCallbacks.push(callback);
 		return () => {
-			this.statusCallbacks = this.statusCallbacks.filter(cb => cb !== callback);
+			this.statusCallbacks = this.statusCallbacks.filter(
+				(cb) => cb !== callback
+			);
 		};
 	}
 
 	onDeviceStatusUpdate(callback: DeviceStatusCallback) {
 		this.deviceStatusCallbacks.push(callback);
 		return () => {
-			this.deviceStatusCallbacks = this.deviceStatusCallbacks.filter(cb => cb !== callback);
+			this.deviceStatusCallbacks = this.deviceStatusCallbacks.filter(
+				(cb) => cb !== callback
+			);
 		};
 	}
 
 	onError(callback: ErrorCallback) {
 		this.errorCallbacks.push(callback);
 		return () => {
-			this.errorCallbacks = this.errorCallbacks.filter(cb => cb !== callback);
+			this.errorCallbacks = this.errorCallbacks.filter((cb) => cb !== callback);
 		};
 	}
 
 	// Scanner Control Methods
 	startScan(scanVolume: ScanVolume): void {
-		window.electronAPI.send('scanner:start', { scanVolume });
+		window.electronAPI.invoke('scanner:start', { scanVolume });
 	}
 
 	pauseScan(): void {
-		window.electronAPI.send('scanner:pause');
+		window.electronAPI.invoke('scanner:pause');
 	}
 
 	resumeScan(): void {
-		window.electronAPI.send('scanner:resume');
+		window.electronAPI.invoke('scanner:resume');
 	}
 
 	resetScanner(): void {
-		window.electronAPI.send('scanner:reset');
+		window.electronAPI.invoke('scanner:reset');
 	}
 
 	// Device Control Methods
 	calibrateDevice(): void {
-		window.electronAPI.send('device:calibrate');
+		window.electronAPI.invoke('device:calibrate');
 	}
 
 	moveSensorY(position: number): void {
-		window.electronAPI.send('device:moveSensorY', { position });
+		window.electronAPI.invoke('device:moveSensorY', { position });
 	}
 
 	rotatePlate(angle: number): void {
-		window.electronAPI.send('device:rotatePlate', { angle });
+		window.electronAPI.invoke('device:rotatePlate', { angle });
 	}
 
-	getDeviceStatus(): DeviceStatus {
+	async getDeviceStatus(): Promise<{
+		deviceStatus: DeviceStatus;
+		scannedPoints: {
+			radius: number;
+			height: number;
+			angle: number;
+		}[];
+	}> {
+		const deviceStatus = await window.electronAPI.invoke('device:getStatus');
+
+		const scannedPoints = await window.electronAPI.invoke('device:getScannedPoints');
+
 		return {
-			baseRotation: 0,
-			sensorRotation: 0,
-			distance: 0,
-			isConnected: true,
-			lastUpdate: new Date(),
-			scanning: false,
-			emergencyStop: false
-		}
-		window.electronAPI.send('device:getStatus');
+			deviceStatus,
+			scannedPoints
+		};
 	}
 
 	emergencyStop(): void {
-		console.log("Stopping");
-		window.electronAPI.send('emergency:stop');
+		console.log('Stopping');
+		window.electronAPI.invoke('emergency:stop');
 	}
 }
 

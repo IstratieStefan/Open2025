@@ -40,36 +40,14 @@ interface Model3DProviderProps {
 export function Model3DProvider({ children }: Model3DProviderProps) {
 	const [modelData, setModelData] = useState<ScanSlice[]>([
 		// Example tetrahedron data - using cylindrical coordinates
-		{
-			height: 0,
-			points: [
-				{
-					radius: 2.5,
-					angle: -135
-				},
-				{
-					radius: 2.5,
-					angle: -45
-				},
-				{
-					radius: 2.5,
-					angle: 45
-				},
-				{
-					radius: 2.5,
-					angle: 135
-				}
-			]
-		},
-		{
-			height: 3,
-			points: [
-				{ radius: 0, angle: 0 }
-			]
-		}
+		
 	]);
 
+    console.log(modelData);
+
 	const addPoint = (point: ScanPoint, height: number) => {
+
+        console.log(point, height);
 		setModelData(prev => {
 			const existingSliceIndex = prev.findIndex(slice => slice.height === height);
 			

@@ -309,14 +309,6 @@ export function ScannerControls({
 										strokeDasharray={`${(baseRotation / 360) * 251} 251`}
 										className='text-primary'
 									/>
-									{/* Center dot */}
-									<circle
-										cx='50'
-										cy='50'
-										r='2'
-										fill='currentColor'
-										className='text-primary'
-									/>
 									{/* Position indicator */}
 									<circle
 										cx={

@@ -21,7 +21,7 @@ import {
 import { saveAs } from 'file-saver';
 import { useModel3D } from '@/lib/model3d-context';
 
-export type ExportFormat = 'stl' | 'obj' | 'ply' | 'glb' | 'gltf';
+export type ExportFormat = 'stl';
 
 interface ExportControlsProps {
 	onExport?: (options: any, location: 'local' | 'cloud') => void;
@@ -36,34 +36,6 @@ const formatConfigs = {
 		extension: '.stl',
 		supportsColors: false,
 		supportsTextures: false
-	},
-	obj: {
-		name: 'OBJ',
-		description: 'Universal 3D format',
-		extension: '.obj',
-		supportsColors: true,
-		supportsTextures: true
-	},
-	ply: {
-		name: 'PLY',
-		description: 'Polygon file format',
-		extension: '.ply',
-		supportsColors: true,
-		supportsTextures: false
-	},
-	glb: {
-		name: 'GLB',
-		description: 'Binary glTF',
-		extension: '.glb',
-		supportsColors: true,
-		supportsTextures: true
-	},
-	gltf: {
-		name: 'glTF',
-		description: 'GL Transmission Format',
-		extension: '.gltf',
-		supportsColors: true,
-		supportsTextures: true
 	}
 };
 
@@ -209,20 +181,7 @@ export function ExportControls({
 						content = generateSTL(currentModelData);
 						mimeType = 'application/sla';
 						break;
-					case 'obj':
-						content = generateOBJ(currentModelData);
-						mimeType = 'text/plain';
-						break;
-					case 'ply':
-						content = generatePLY(currentModelData);
-						mimeType = 'text/plain';
-						break;
-					case 'glb':
-					case 'gltf':
-						// For now, export as JSON until proper glTF export is implemented
-						content = generateJSON(currentModelData);
-						mimeType = 'application/json';
-						break;
+	
 					default:
 						content = generateJSON(currentModelData);
 						mimeType = 'application/json';
@@ -417,15 +376,6 @@ export function ExportControls({
 							>
 								<HardDrive className='mr-2 h-4 w-4' />
 								Save Locally
-							</Button>
-							<Button
-								onClick={() => handleExport('cloud')}
-								disabled={!hasModelData || isExporting}
-								variant='outline'
-								className='flex-1'
-							>
-								<Cloud className='mr-2 h-4 w-4' />
-								Save to Cloud
 							</Button>
 						</div>
 					</TabsContent>

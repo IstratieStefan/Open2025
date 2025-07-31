@@ -4,13 +4,23 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="73afdcdc-69f1-4447-961a-7bb8e45478f6" name="Changes" comment="Added better monitoring and debug tools">
+    <list default="true" id="73afdcdc-69f1-4447-961a-7bb8e45478f6" name="Changes" comment="Improved 3d viewer, model exports and more">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/credentials.ts" beforeDir="false" afterPath="$PROJECT_DIR$/main/credentials.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/dist/credentials.js" beforeDir="false" afterPath="$PROJECT_DIR$/main/dist/credentials.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/dist/preload.js" beforeDir="false" afterPath="$PROJECT_DIR$/main/dist/preload.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/dist/scanner-ipc.js" beforeDir="false" afterPath="$PROJECT_DIR$/main/dist/scanner-ipc.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/dist/serial.js" beforeDir="false" afterPath="$PROJECT_DIR$/main/dist/serial.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/preload.ts" beforeDir="false" afterPath="$PROJECT_DIR$/main/preload.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/scanner-ipc.ts" beforeDir="false" afterPath="$PROJECT_DIR$/main/scanner-ipc.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/serial.ts" beforeDir="false" afterPath="$PROJECT_DIR$/main/serial.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/app/layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/layout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/3d-viewer.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/3d-viewer.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/components/export-controls.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/export-controls.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/scan-volume-controls.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/scanner-controls.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/scanner-controls.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/model3d-context.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/model3d-context.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/scanner-api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/scanner-api.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/scanner-context.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/scanner-context.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../main.py" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -91,7 +101,8 @@
       <updated>1753861169945</updated>
       <workItem from="1753861171319" duration="5079000" />
       <workItem from="1753879930844" duration="128000" />
-      <workItem from="1753882704458" duration="11317000" />
+      <workItem from="1753882704458" duration="13240000" />
+      <workItem from="1753940824488" duration="768000" />
     </task>
     <task id="LOCAL-00001" summary="Made 3d viewer work">
       <option name="closed" value="true" />
@@ -109,7 +120,15 @@
       <option name="project" value="LOCAL" />
       <updated>1753892418123</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="Improved 3d viewer, model exports and more">
+      <option name="closed" value="true" />
+      <created>1753912678657</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1753912678658</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -118,6 +137,7 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Made 3d viewer work" />
     <MESSAGE value="Added better monitoring and debug tools" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added better monitoring and debug tools" />
+    <MESSAGE value="Improved 3d viewer, model exports and more" />
+    <option name="LAST_COMMIT_MESSAGE" value="Improved 3d viewer, model exports and more" />
   </component>
 </project>

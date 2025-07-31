@@ -21,14 +21,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
+      <Model3DProvider>
         <LoggingProvider>
           <ScannerProvider>
-            <Model3DProvider>
+            
               {children}
               <Toaster />
-            </Model3DProvider>
           </ScannerProvider>
         </LoggingProvider>
+        </Model3DProvider>
       </body>
     </html>
   )

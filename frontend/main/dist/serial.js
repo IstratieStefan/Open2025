@@ -21,10 +21,13 @@ class Serial {
             path: this._data.port
         });
         this._port.on('open', () => {
+            console.log('Connected');
             this._connected = true;
-            const parser = this._port.pipe(new serialport_1.ReadlineParser({ delimiter: '\r\n' }));
-            parser.on('data', this._dataFunction);
-            this.extraOpen();
+            const parser = this._port.pipe(new serialport_1.ReadlineParser({ delimiter: '\n' }));
+            parser.on('data', (data) => {
+                console.log(data);
+                this._dataFunction(data);
+            });
         });
         this._port.on('error', (err) => {
             console.error('Error:', err.message);
@@ -32,13 +35,11 @@ class Serial {
                 this._connected = false;
             }
             this._attemptReconnect();
-            this.extraError(err);
         });
         this._port.on('close', () => {
             this._connected = false;
             console.log('Disconnected');
             this._attemptReconnect();
-            this.extraClose();
         });
     }
     _attemptReconnect() {
@@ -46,8 +47,5 @@ class Serial {
             this._connect();
         }, 3000);
     }
-    extraOpen() { }
-    extraError(err) { }
-    extraClose() { }
 }
 exports.Serial = Serial;

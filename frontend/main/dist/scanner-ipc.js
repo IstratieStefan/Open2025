@@ -1,42 +1,56 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const electron_1 = require("electron");
+const serial_handler_1 = require("./serial-handler");
+const credentials_1 = require("./credentials");
+const serial = new serial_handler_1.SerialHandler(credentials_1.credentials, processCommand);
+let scannedPoints = [];
 // Scanner state
 let scannerState = {
     baseRotation: 0,
-    sensorRotation: 0,
+    height: 0,
     distance: 0,
     scanning: false,
     emergencyStop: false,
     connected: true
 };
-// Process commands from the Pico
 function processCommand(data) {
+    console.log(data);
     const message = data.trim();
     if (message.startsWith('POS ')) {
         // Status update: "POS {base_rotation} {sensor_rotation} {distance}"
         const parts = message.split(' ');
         if (parts.length === 4) {
             scannerState.baseRotation = parseInt(parts[1]);
-            scannerState.sensorRotation = parseInt(parts[2]);
+            scannerState.height = parseInt(parts[2]);
             scannerState.distance = parseInt(parts[3]);
-            // Send status update to frontend
-            // TODO: Implement proper event emission to frontend
             console.log('Status update:', scannerState);
         }
     }
+    else if (message.startsWith('POSX ')) {
+        const parts = message.split(' ');
+        if (parts.length === 4) {
+            scannerState.baseRotation = parseInt(parts[1]);
+            scannerState.height = parseInt(parts[2]);
+            scannerState.distance = parseInt(parts[3]);
+            if (parseInt(parts[2]) <= 122) {
+                scannedPoints.push({
+                    angle: parseInt(parts[1]) * 1.8,
+                    height: parseInt(parts[2]) / 30,
+                    radius: (122 - parseInt(parts[3])) / 20
+                });
+            }
+        }
+    }
     else if (message.startsWith('OK')) {
-        // Command executed successfully
         console.log('Command executed successfully');
     }
     else if (message.startsWith('ERROR ')) {
-        // Error from Pico
         const error = message.substring(6);
         console.error('Pico error:', error);
         // TODO: Send error to frontend
     }
     else if (message.startsWith('STATUS ')) {
-        // Status message from Pico
         const status = message.substring(7);
         console.log('Pico status:', status);
         // TODO: Send status to frontend
@@ -50,128 +64,95 @@ function processCommand(data) {
     }
 }
 // Scanner Control
-electron_1.ipcMain.on('scanner:start', (event, { scanVolume }) => {
+electron_1.ipcMain.handle('scanner:start', (event) => {
     if (!scannerState.connected) {
-        event.reply('scanner:error', 'Scanner not connected');
+        // event.reply('scanner:error', 'Scanner not connected');
         return;
     }
     if (scannerState.scanning) {
-        event.reply('scanner:error', 'Scan already in progress');
+        // event.reply('scanner:error', 'Scan already in progress');
         return;
     }
-    try {
-        console.log('Starting scan');
-        scannerState.scanning = true;
-        event.reply('scanner:status', { status: 'scanning', progress: 0 });
-    }
-    catch (error) {
-        event.reply('scanner:error', 'Failed to start scan');
-    }
+    console.log('Starting scan');
+    scannerState.scanning = true;
+    serial.sendCommand('scan');
 });
-electron_1.ipcMain.on('scanner:pause', (event) => {
+electron_1.ipcMain.handle('scanner:pause', (event) => {
     if (!scannerState.connected) {
-        event.reply('scanner:error', 'Scanner not connected');
-        return;
+        return 'Scanner not connected';
     }
-    try {
-        console.log('Pausing scan');
-        scannerState.scanning = false;
-        event.reply('scanner:status', { status: 'paused' });
-    }
-    catch (error) {
-        event.reply('scanner:error', 'Failed to pause scan');
-    }
+    serial.sendCommand('scan');
+    console.log('Pausing scan');
+    scannerState.scanning = false;
 });
-electron_1.ipcMain.on('scanner:resume', (event) => {
+electron_1.ipcMain.handle('scanner:resume', (event) => {
     if (!scannerState.connected) {
-        event.reply('scanner:error', 'Scanner not connected');
         return;
     }
-    try {
-        console.log('Resuming scan');
-        scannerState.scanning = true;
-        event.reply('scanner:status', { status: 'scanning' });
-    }
-    catch (error) {
-        event.reply('scanner:error', 'Failed to resume scan');
-    }
+    serial.sendCommand('resume');
+    console.log('Resuming scan');
+    scannerState.scanning = true;
 });
-electron_1.ipcMain.on('scanner:reset', (event) => {
+electron_1.ipcMain.handle('scanner:reset', (event) => {
     if (!scannerState.connected) {
-        event.reply('scanner:error', 'Scanner not connected');
         return;
     }
-    try {
-        console.log('Resetting scanner');
-        scannerState.scanning = false;
-        scannerState.emergencyStop = false;
-        event.reply('scanner:status', { status: 'idle' });
-    }
-    catch (error) {
-        event.reply('scanner:error', 'Failed to reset scanner');
-    }
+    console.log('Resetting scanner');
+    scannerState.scanning = false;
+    scannerState.emergencyStop = false;
+    serial.sendCommand("reset");
 });
 electron_1.ipcMain.on('device:moveSensorY', (event, { position }) => {
     if (!scannerState.connected) {
-        event.reply('scanner:error', 'Scanner not connected');
+        // event.reply('scanner:error', 'Scanner not connected');
         return;
     }
     if (scannerState.scanning) {
-        event.reply('scanner:error', 'Cannot move manually while scanning');
         return;
     }
     try {
         console.log('Moving sensor to', position);
-        event.reply('device:status', { sensorRotation: position });
+        // event.reply('device:status', { sensorRotation: position });
     }
     catch (error) {
-        event.reply('scanner:error', 'Failed to move sensor');
+        // event.reply('scanner:error', 'Failed to move sensor');
     }
 });
-electron_1.ipcMain.on('device:rotatePlate', (event, { angle }) => {
+electron_1.ipcMain.handle('device:rotatePlate', (event, { angle }) => {
     if (!scannerState.connected) {
-        event.reply('scanner:error', 'Scanner not connected');
+        // event.reply('scanner:error', 'Scanner not connected');
         return;
     }
     if (scannerState.scanning) {
-        event.reply('scanner:error', 'Cannot move manually while scanning');
+        // event.reply('scanner:error', 'Cannot move manually while scanning');
         return;
     }
     try {
         console.log('Rotating plate to', angle);
-        event.reply('device:status', { baseRotation: angle });
+        // event.reply('device:status', { baseRotation: angle });
     }
     catch (error) {
-        event.reply('scanner:error', 'Failed to rotate plate');
+        // event.reply('scanner:error', 'Failed to rotate plate');
     }
 });
 // Utility
-electron_1.ipcMain.on('status', (event) => {
-    if (scannerState.connected) {
-        try {
-            console.log('Status request received');
-            event.reply('pong', { connected: true });
-        }
-        catch (error) {
-            event.reply('pong', { connected: false, error: 'Connection failed' });
-        }
-    }
-    else {
-        event.reply('pong', { connected: false, error: 'Not connected' });
-    }
-});
-electron_1.ipcMain.on('emergency:stop', (event) => {
+electron_1.ipcMain.handle('device:getStatus', (event) => {
     if (!scannerState.connected) {
-        event.reply('scanner:error', 'Scanner not connected');
         return;
     }
-    try {
-        console.log('Emergency stop triggered');
-        scannerState.scanning = false;
-        scannerState.emergencyStop = true;
-        event.reply('scanner:status', { status: 'emergency_stop' });
+    return scannerState;
+});
+electron_1.ipcMain.handle('device:getScannedPoints', (event) => {
+    const points = scannedPoints;
+    scannedPoints = [];
+    return points;
+});
+electron_1.ipcMain.handle('emergency:stop', (event) => {
+    if (!scannerState.connected) {
+        return;
     }
-    catch (error) {
-        event.reply('scanner:error', 'Failed to emergency stop');
-    }
+    console.log('Emergency stop triggered');
+    scannerState.scanning = false;
+    scannerState.emergencyStop = true;
+    serial.sendCommand("stop");
 });

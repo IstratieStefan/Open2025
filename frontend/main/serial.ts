@@ -32,12 +32,14 @@ export class Serial {
 		});
 
 		this._port.on('open', () => {
+			console.log('Connected');
 			this._connected = true;
-			const parser = this._port.pipe(new ReadlineParser({ delimiter: '\r\n' }));
+			const parser = this._port.pipe(new ReadlineParser({ delimiter: '\n' }));
 
-			parser.on('data', this._dataFunction);
-
-			this.extraOpen();
+			parser.on('data', (data) => {
+				console.log(data);
+				this._dataFunction(data);
+			});
 		});
 
 		this._port.on('error', (err) => {
@@ -48,8 +50,6 @@ export class Serial {
 			}
 
 			this._attemptReconnect();
-
-			this.extraError(err);
 		});
 
 		this._port.on('close', () => {
@@ -58,8 +58,6 @@ export class Serial {
 			console.log('Disconnected');
 
 			this._attemptReconnect();
-
-			this.extraClose();
 		});
 	}
 
@@ -68,10 +66,4 @@ export class Serial {
 			this._connect();
 		}, 3000);
 	}
-
-	extraOpen() {}
-
-	extraError(err: any) {}
-
-	extraClose() {}
 }

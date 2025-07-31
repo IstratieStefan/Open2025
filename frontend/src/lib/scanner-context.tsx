@@ -14,6 +14,7 @@ import {
 	type ScannerStatus,
 	type ScanVolume
 } from './scanner-api';
+import { useModel3D } from './model3d-context';
 
 interface ScannerContextType {
 	scannerStatus: ScannerStatus['status'];
@@ -56,36 +57,33 @@ export const ScannerProvider = ({ children }: { children: ReactNode }) => {
 	const [isExporting, setIsExporting] = useState(false);
 	const [exportProgress, setExportProgress] = useState(0);
 
+  const { addPoint } = useModel3D();
+
 	useEffect(() => {
-		// const unsubscribeStatus = scannerAPI.onStatusUpdate((status) => {
-		// 	setScannerStatus(status.status);
-		// 	setScanProgress(status.progress);
-		// 	setCurrentLayer(status.currentLayer);
-		// 	setTotalLayers(status.totalLayers);
-		// 	setEstimatedTime(status.estimatedTime);
-		// });
-
-		// const unsubscribeDevice = scannerAPI.onStatusUpdate(
-		// 	(deviceStatus) => {
-		// 		setDeviceStatus(deviceStatus);
-		// 		console.log('Set to: ', deviceStatus);
-		// 	}
-		// );
-
 		const unsubscribeError = scannerAPI.onError((error) => {
 			console.error('Scanner error:', error);
 			setScannerStatus('error');
 		});
 
-		const status = scannerAPI.getDeviceStatus();
+		scannerAPI.getDeviceStatus().then((status) => {
+			setDeviceStatus(status.deviceStatus);
+		});
 
-		setDeviceStatus(status);
-		console.log('Set to: ', deviceStatus);
+		const interval = setInterval(() => {
+			scannerAPI.getDeviceStatus().then((status) => {
+				setDeviceStatus(status.deviceStatus);
+
+        console.log(`adding ${status.scannedPoints.length} points`);
+
+        status.scannedPoints.forEach((point) => {
+          addPoint(point, point.height);
+        });
+			});
+		}, 200);
 
 		return () => {
-			// unsubscribeStatus();
-			// unsubscribeDevice();
 			unsubscribeError();
+			clearInterval(interval);
 		};
 	}, []);
 

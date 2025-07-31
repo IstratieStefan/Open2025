@@ -9,5 +9,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 	},
 	send: (channel: string, args?: any) => {
 		ipcRenderer.send(channel, args);
+	},
+	invoke: <T = any>(channel: string, args?: any): Promise<T> => {
+		return ipcRenderer.invoke(channel, args);
 	}
 });
