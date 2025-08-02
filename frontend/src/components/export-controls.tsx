@@ -44,30 +44,46 @@ function generateSTL(modelData: any): string {
 	// Simple STL generation for point cloud data
 	let stl = 'solid model\n';
 	
-	// For each slice, create simple triangles
+	// For each slice, create triangles between adjacent slices
 	modelData.forEach((slice: any, sliceIndex: number) => {
 		if (sliceIndex < modelData.length - 1) {
 			const nextSlice = modelData[sliceIndex + 1];
+			
+			// Use the minimum number of points between the two slices
+			const maxPoints = Math.min(slice.points.length, nextSlice.points.length);
+			
 			// Create triangles between slices
-			slice.points.forEach((point: any, pointIndex: number) => {
+			for (let pointIndex = 0; pointIndex < maxPoints; pointIndex++) {
+				const point = slice.points[pointIndex];
 				const nextPoint = slice.points[(pointIndex + 1) % slice.points.length];
-				if (nextSlice.points[pointIndex]) {
-					const upperPoint = nextSlice.points[pointIndex];
-					
-					// Convert cylindrical to cartesian
-					const p1 = cylindricalToCartesian(point.radius, slice.height, point.angle);
-					const p2 = cylindricalToCartesian(nextPoint.radius, slice.height, nextPoint.angle);
-					const p3 = cylindricalToCartesian(upperPoint.radius, nextSlice.height, upperPoint.angle);
-					
-					stl += `facet normal 0 0 0\n`;
-					stl += `  outer loop\n`;
-					stl += `    vertex ${p1[0]} ${p1[1]} ${p1[2]}\n`;
-					stl += `    vertex ${p2[0]} ${p2[1]} ${p2[2]}\n`;
-					stl += `    vertex ${p3[0]} ${p3[1]} ${p3[2]}\n`;
-					stl += `  endloop\n`;
-					stl += `endfacet\n`;
-				}
-			});
+				const upperPoint = nextSlice.points[pointIndex];
+				const upperNextPoint = nextSlice.points[(pointIndex + 1) % nextSlice.points.length];
+				
+				// Convert cylindrical to cartesian
+				const p1 = cylindricalToCartesian(point.radius, slice.height, point.angle);
+				const p2 = cylindricalToCartesian(nextPoint.radius, slice.height, nextPoint.angle);
+				const p3 = cylindricalToCartesian(upperPoint.radius, nextSlice.height, upperPoint.angle);
+				const p4 = cylindricalToCartesian(upperNextPoint.radius, nextSlice.height, upperNextPoint.angle);
+				
+				// Create two triangles to form a quad between slices
+				// First triangle: p1, p3, p2
+				stl += `facet normal 0 0 0\n`;
+				stl += `  outer loop\n`;
+				stl += `    vertex ${p1[0]} ${p1[1]} ${p1[2]}\n`;
+				stl += `    vertex ${p3[0]} ${p3[1]} ${p3[2]}\n`;
+				stl += `    vertex ${p2[0]} ${p2[1]} ${p2[2]}\n`;
+				stl += `  endloop\n`;
+				stl += `endfacet\n`;
+				
+				// Second triangle: p2, p3, p4
+				stl += `facet normal 0 0 0\n`;
+				stl += `  outer loop\n`;
+				stl += `    vertex ${p2[0]} ${p2[1]} ${p2[2]}\n`;
+				stl += `    vertex ${p3[0]} ${p3[1]} ${p3[2]}\n`;
+				stl += `    vertex ${p4[0]} ${p4[1]} ${p4[2]}\n`;
+				stl += `  endloop\n`;
+				stl += `endfacet\n`;
+			}
 		}
 	});
 	

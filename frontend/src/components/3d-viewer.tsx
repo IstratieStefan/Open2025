@@ -17,12 +17,6 @@ interface Model3DViewerProps {
 	showEdges?: boolean; // Show edges/wireframe
 }
 
-
-
-
-
-
-
 // Helper function to convert cylindrical to Cartesian coordinates
 function cylindricalToCartesian(
 	radius: number,
